@@ -1,0 +1,9 @@
+<ForceField>
+    <AtomTypes>
+        <Type name="lj_A" def="[_A]"
+              class="lj" element="_A" mass="1.0" desc="generic LJ particle"/>
+    </AtomTypes>
+    <NonbondedForce coulomb14scale="0.5" lj14scale="0.5">
+        <Atom type="lj_A" charge="0.0" sigma="1.0" epsilon="1.0"/>
+    </NonbondedForce>
+</ForceField>

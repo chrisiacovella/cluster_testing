@@ -1,0 +1,61 @@
+import hoomd
+import gsd.hoomd
+
+system_temperature = {{  temperature  }}
+production_time = {{  run_time  }}
+
+
+if '{{  run_mode  }}' == 'gpu':
+    device_mode = hoomd.device.GPU()
+else:
+    device_mode = hoomd.device.CPU()
+
+sim = hoomd.Simulation(device=device_mode, seed={{  velocity_seed  }})
+
+#########################
+# system initialization
+#########################
+
+sim.create_state_from_gsd(filename='system_input.gsd')
+sim.state.thermalize_particle_momenta(filter=hoomd.filter.All(), kT=system_temperature)
+
+
+#########################
+# interaction definition
+#########################
+
+cell = hoomd.md.nlist.Cell(buffer=1.2)
+lj = hoomd.md.pair.LJ(nlist=cell)
+lj.params[('A', 'A')] = dict(epsilon=1, sigma=1)
+lj.r_cut[('A', 'A')] = 2.5
+
+#########################
+# integrator setup
+#########################
+
+
+nvt = hoomd.md.methods.NVT(kT=system_temperature, filter=hoomd.filter.All(), tau=1.0)
+integrator = hoomd.md.Integrator(dt=0.001)
+integrator.forces.append(lj)
+integrator.methods.append(nvt)
+sim.operations.integrator = integrator
+
+#########################
+# runtime parameters
+#########################
+
+# add a logger to output the current step and timesteps per second (TPS) 
+logger = hoomd.logging.Logger(categories=['scalar', 'string'])
+logger.add(sim, quantities=['timestep', 'tps'])
+table = hoomd.write.Table(trigger=hoomd.trigger.Periodic(period=5000),
+                          logger=logger)
+sim.operations.writers.append(table)
+
+
+sim.run(production_time)
+
+print("simulation complete")
+
+#delete the instances we defined ensure writers are closed
+del logger, table
+del integrator, nvt, lj, cell, device_mode

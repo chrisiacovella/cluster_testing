@@ -1,0 +1,20 @@
+import hoomd
+from hoomd import md
+hoomd.context.initialize("--mode={{  run_mode  }}")
+
+# create a 10x10x10 square lattice of particles with name A
+hoomd.init.read_gsd(filename='system_input.gsd')
+
+# specify Lennard-Jones interactions between particle pairs
+nl = md.nlist.cell(r_buff =1.2)
+lj = md.pair.lj(r_cut=2.5, nlist=nl)
+lj.pair_coeff.set('A', 'A', epsilon=1.0, sigma=1.0)
+
+# integrate at constant temperature
+all = hoomd.group.all();
+md.integrate.mode_standard(dt=0.001)
+integrator = hoomd.md.integrate.nvt(group=all, kT= {{  temperature  }}, tau=1.0)
+integrator.randomize_velocities({{  velocity_seed  }})
+
+# run
+hoomd.run( {{  run_time  }})

@@ -9,8 +9,8 @@ import foyer
 from foyer import Forcefield
 import mbuild as mb
 
-# Template mdp files are stored in engine_input/gromacs/mdp.
-from engine_input.gromacs import mdp
+# Template hoomd script files are stored in engine_input/hoomd.
+from engine_input import hoomd
 
 
 class Project(flow.FlowProject):
@@ -23,13 +23,13 @@ class Project(flow.FlowProject):
 # To run on a cluster, you may need to define a template for the scheduler
 # For example, below is what I would use on my local group cluster.
 # It is currently commented out as it won't be used in this example.
-"""
-from flow.environment import DefaultTorqueEnvironment
-class Rahman(DefaultTorqueEnvironment):
-    # Subclass of DefaultPBSEnvironment for VU's Rahman cluster.
-    # PBS templates are stored in a "templates" folder in your project
+
+from flow.environment import DefaultSlurmEnvironment
+class Rahman(DefaultSlurmEnvironment):
+    # Subclass of DefaultSlurmEnvironment for VU's Rahman cluster.
+    # The Slurm template are stored in a "templates" folder in the project
     # directory.
-    template = "rahman_gmx.sh"
+    template = "rahman_hoomd.sh"
     
     @classmethod
     def add_args(cls, parser):
@@ -41,13 +41,13 @@ class Rahman(DefaultTorqueEnvironment):
                             help="Walltime for this submission",
                             )
 
-"""
+
 
 # This function will read in jinja template, replace variables, and write out the new file
 # This is not called directly in the signac project, but called by the init function
 # defined below.
-def _setup_mdp(fname, template, data, overwrite=False):
-    """Create mdp files based on a template and provided data.
+def _setup_simfile(fname, template, data, overwrite=False):
+    """Create simulation script files based on a template and provided data.
         Parameters
         ----------
         fname: str
@@ -57,7 +57,7 @@ def _setup_mdp(fname, template, data, overwrite=False):
         data: dict
         Dictionary storing data matched with the fields available in the template
         overwrite: bool, optional, default=False
-        Options to overwrite (or not) existing mdp file of the
+        Options to overwrite (or not) existing output file
         Returns
         -------
         File saved with names defined by fname
@@ -102,41 +102,52 @@ def init_job(job):
     project_root = Project().root_directory()
 
     # fetch the key information related to system structure parameterization
-    molecule_string = job.sp.molecule_string
-    box_length = job.sp.box_length
+    
     n_molecules = job.sp.n_molecules
+    system_density = job.sp.system_density
+
+
+
+    
+    
     
     # use mbuild to constract a compound and fill a box
-    compound = mb.load(molecule_string, smiles=True)
-    box = mb.Box(lengths=[box_length, box_length, box_length])
-    compound_system = mb.fill_box(compound, n_compounds=n_molecules, box=box)
+    lj_particle = mb.Compound(name='_A')
+    volume = n_molecules/system_density
+    box_length = volume**(1.0/3.0)
     
-    # atomtype and save the input files to GROMACS format
-    compound_system.save(f"system_input.top", forcefield_files=f"{project_root}/xml_files/oplsaa_alkanes.xml", overwrite=True)
-    compound_system.save(f"system_input.gro", overwrite=True)
+    box = mb.Box(lengths=[box_length, box_length, box_length])
+    compound_system = mb.fill_box(lj_particle, n_compounds=n_molecules, box=box)
+    
+    # atomtype and save the input files to hoomd gsd format
+    compound_system.save(f"system_input.gsd", forcefield_files=f"{project_root}/xml_files/lj.xml", overwrite=True)
 
     
     # fetch run time variables that will be set in the .mdp file
-    run_time = job.sp.run_time
     temperature = job.sp.temperature
     velocity_seed = job.sp.velocity_seed
+    run_time = job.sp.run_time
+    hoomd_version = job.sp.hoomd_version
+    run_mode = job.sp.run_mode
+    
     
     # aggregate info into a simple dictionary
-    mdp_abs_path = Project().root_directory() + '/engine_input/gromacs/mdp'
-    mdp = {
-        "fname": "system_input.mdp",
-        "template": f"{mdp_abs_path}/system.mdp.jinja",
+    simfile_abs_path = Project().root_directory() + '/engine_input/hoomd/'
+    simfile = {
+        "fname": "system_input.py",
+        "template": f"{simfile_abs_path}/lj.{hoomd_version}.py.jinja",
         "data": {
+            "run_mode" : run_mode,
             "run_time": run_time,
             "velocity_seed": velocity_seed,
             "temperature": temperature,
         }
     }
-    # call the function that will read in template, perform replacement, and generate the .mdp file
-    _setup_mdp(
-               fname=mdp["fname"],
-               template=mdp["template"],
-               data=mdp["data"],
+    # call the function that will read in template, perform replacement, and generate the simulation file file
+    _setup_simfile(
+               fname=simfile["fname"],
+               template=simfile["template"],
+               data=simfile["data"],
                overwrite=True,
                )
 
@@ -162,10 +173,17 @@ def init_job(job):
 @flow.cmd
 def run_job(job):
 
-    grompp = "gmx grompp -f system_input.mdp -o system_input.tpr -c system_input.gro -p system_input.top --maxwarn 2"
-    mdrun ="gmx mdrun -v -deffnm system -s system_input.tpr -cpi system.cpt -nt 16"
+    run_mode = job.sp.run_mode
+    srun_n = job.sp.srun_n
+    module = job.sp.module
+    node_type = job.sp.node_type
+    gres_prefix = job.sp.gres_prefix
+    gres_n = job.sp.gres_n
+
     
-    msg = f"{grompp} && {mdrun}"
+    module_to_load =f"module load {module}"
+    slurm_cmd = f"srun -n {srun_n} python system_input.py --partition=short-{node_type} --gres={gres_prefix}{gres_n} --ntasks={srun_n}"
+    msg = f"{module_to_load} && {slurm_cmd}"
     print(msg)
     return(msg)
     

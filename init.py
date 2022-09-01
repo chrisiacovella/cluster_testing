@@ -16,43 +16,87 @@ import signac
 import unyt as u
 
 # Define a new project and give it a name.
-pr = signac.init_project('alkane_screen')
+pr = signac.init_project('LJ cluster_testing')
 
-# Define the design space:
-# In this case, we will set our design space to be
-# the chemical structure, where we increase alkane length.
-# For convenience, since are only considering
-# short, linear alkaneswe will define the
-# molecule dataspace using the SMILES strings.
 
-molecule_strings = ['C', 'CC', 'CCC']
+# system sizes 22**3, 30**3, 40**3
+system_sizes = [10648, 27000, 64000]
 
-# Define statepoint information:
-# We could move any of these variables into the
-# design space so we could consider
-# e.g., the behavior as a function of temperature
-# in addition to molecule structure.
-
-n_molecules = 100
-temperature = 300* u.K
+system_density = 1.0
+temperature = 1.0
 velocity_seed = 8675309
-run_time = 10000
-box_length = 10*u.nm
+run_time = 50000
+
+node_params = []
+
+node_param = {
+    "node_type": 'std',
+    "module": 'hoomd/single/2.9.7std',
+    "hoomd_version": 'hoomd2.9.7',
+    "gres_prefix": 'gpu:GTX980:',
+    "gres_n": [1, 2, 0, 0, 0, 0, 0],
+    "srun_n": [1, 2, 1, 2, 4, 8, 16],
+    "run_modes": ['gpu', 'gpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu'],
+}
+node_params.append(node_param)
+
+node_param = {
+    "node_type": 'tesla',
+    "module": 'hoomd/single/2.9.7std',
+    "hoomd_version": 'hoomd2.9.7',
+    "gres_prefix": 'gpu:V100:',
+    "gres_n": [1, 2, 0, 0, 0, 0],
+    "srun_n": [1, 2, 1, 2, 4, 8],
+    "run_modes": ['gpu', 'gpu', 'cpu', 'cpu', 'cpu', 'cpu'],
+}
+node_params.append(node_param)
+
+node_param = {
+    "node_type": 'tesla',
+    "module": 'hoomd/single/2.9.7tesla',
+    "hoomd_version": 'hoomd2.9.7',
+    "gres_prefix": 'gpu:V100:',
+    "gres_n": [1, 2, 0, 0, 0, 0],
+    "srun_n": [1, 2, 1, 2, 4, 8],
+    "run_modes": ['gpu', 'gpu', 'cpu', 'cpu', 'cpu', 'cpu'],
+}
+node_params.append(node_param)
+
+node_param = {
+    "node_type": 'tesla',
+    "module": 'hoomd/single/2.9.7tesla',
+    "hoomd_version": 'hoomd2.9.7',
+    "gres_prefix": 'gpu:A100:',
+    "gres_n": [1, 2, 0, 0, 0, 0, 0],
+    "srun_n": [1, 2, 1, 2, 4, 8, 16],
+    "run_modes": ['gpu', 'gpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu'],
+}
+node_params.append(node_param)
 
 
 # Loop over the design space to create an array of statepoints
 total_statepoints = []
-for molecule_string in molecule_strings:
-    statepoint = {
-        "molecule_string": molecule_string,
-        "temperature": temperature.to_value("K"),
-        "velocity_seed": velocity_seed,
-        "run_time": run_time,
-        "n_molecules": n_molecules,
-        "box_length": box_length.to_value("nm"),
+for node_param in node_params:
+    for i, run_mode in enumerate(node_param['run_modes']):
+        
+        for system_size in system_sizes:
+            statepoint = {
+                "temperature": temperature,
+                "velocity_seed": velocity_seed,
+                "run_time": run_time,
+                "n_molecules": system_size,
+                "system_density": system_density,
+                "node_type": node_param['node_type'],
+                "module": node_param['module'],
+                "hoomd_version": node_param['hoomd_version'],
+                "gres_prefix": node_param['gres_prefix'],
+                "gres_n": node_param['gres_n'][i],
+                "srun_n": node_param['srun_n'][i],
+                "run_mode": run_mode,
 
-    }
-    total_statepoints.append(statepoint)
+
+            }
+            total_statepoints.append(statepoint)
 
 # Initialize the statepoints.
 # Since we only are defining small handful,
