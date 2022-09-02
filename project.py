@@ -128,11 +128,7 @@ def init_job(job):
     # fetch the key information related to system structure parameterization
     
     n_molecules = job.sp.n_molecules
-    system_density = job.sp.system_density
-
-
-
-    
+    system_density = job.sp.system_density    
     
     
     # use mbuild to constract a compound and fill a box
@@ -141,7 +137,7 @@ def init_job(job):
     box_length = volume**(1.0/3.0)
     
     box = mb.Box(lengths=[box_length, box_length, box_length])
-    compound_system = mb.fill_box(lj_particle, n_compounds=n_molecules, box=box)
+    compound_system = mb.fill_box(lj_particle, n_compounds=n_molecules, box=box, overlap=0.12, edge=0.3)
     
     # atomtype and save the input files to hoomd gsd format
     compound_system.save(f"system_input.gsd", forcefield_files=f"{project_root}/xml_files/lj.xml", overwrite=True)
@@ -192,8 +188,7 @@ def init_job(job):
 # as it may overrun the shell can handle (e.g., getting an "Argument list too long" error)
 
 @Project.operation(f'run')
-@Project.post(lambda j: j.isfile(f"system.gro"))
-@flow.with_job
+@flow.with_job
 @flow.cmd
 def run_job(job):
 
@@ -213,10 +208,9 @@ def run_job(job):
 # This will be used in the analysis.py file to ensure that we are only performing analysis
 # on simulations that have completed.
 @Project.operation(f'check')
-@Project.post(lambda j: j.isfile("system.gro"))
 @flow.with_job
 def check_job(job):
-    molecule_string = job.sp.molecule_string
+
     if job.isfile(f"system.gro") == True:
         print(f"{molecule_string} ::  completed")
         if not molecule_string in job.doc.get('completed', []):
