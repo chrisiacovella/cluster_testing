@@ -1,4 +1,4 @@
-{% extends "base_script.sh" %}
+{% extends "slurm.sh" %}
 {% block header %}
 #!/bin/bash
 #SBATCH --job-name="{{ id }}"
