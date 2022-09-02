@@ -5,6 +5,6 @@
 #SBATCH --partition={{ partition }}
 #SBATCH --gres={{ gres }}
 {% block tasks %}
-#SBATCH --ntasks={{ np_global }}
+#SBATCH --ntasks={{ ntasks }}
 {% endblock %}
 {% endblock %}
