@@ -182,7 +182,7 @@ def run_job(job):
 
     
     module_to_load =f"module load {module}"
-    slurm_cmd = f"srun -n {srun_n} python system_input.py --partition=short-{node_type} --gres={gres_prefix}{gres_n} --ntasks={srun_n}"
+    slurm_cmd = f"srun -n {srun_n} python system_input.py"
     msg = f"{module_to_load} && {slurm_cmd}"
     print(msg)
     return(msg)

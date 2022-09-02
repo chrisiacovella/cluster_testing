@@ -3,7 +3,7 @@
 #!/bin/bash
 #SBATCH --job-name="{{ id }}"
 #SBATCH --partition={{ partition }}
-#SBATCH -t {{ walltime|format_timedelta }}
+#SBATCH --gres={{ gres }}
 {% block tasks %}
 #SBATCH --ntasks={{ np_global }}
 {% endblock %}
