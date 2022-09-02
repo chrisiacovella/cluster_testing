@@ -26,8 +26,8 @@ sim.state.thermalize_particle_momenta(filter=hoomd.filter.All(), kT=system_tempe
 
 cell = hoomd.md.nlist.Cell(buffer=1.2)
 lj = hoomd.md.pair.LJ(nlist=cell)
-lj.params[('A', 'A')] = dict(epsilon=1, sigma=1)
-lj.r_cut[('A', 'A')] = 2.5
+lj.params[('lj_A', 'lj_A')] = dict(epsilon=1, sigma=1)
+lj.r_cut[('lj_A', 'lj_A')] = 2.5
 
 #########################
 # integrator setup

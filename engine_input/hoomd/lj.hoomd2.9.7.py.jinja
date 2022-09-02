@@ -8,7 +8,7 @@ hoomd.init.read_gsd(filename='system_input.gsd')
 # specify Lennard-Jones interactions between particle pairs
 nl = md.nlist.cell(r_buff =1.2)
 lj = md.pair.lj(r_cut=2.5, nlist=nl)
-lj.pair_coeff.set('A', 'A', epsilon=1.0, sigma=1.0)
+lj.pair_coeff.set('lj_A', 'lj_A', epsilon=1.0, sigma=1.0)
 
 # integrate at constant temperature
 all = hoomd.group.all();
