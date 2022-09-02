@@ -50,8 +50,20 @@ class Rahman(DefaultSlurmEnvironment):
                                 'short-std',
                                 'short-tesla',
                             ],
-                            default='gshort-std',
+                            default='short-std',
                             help="which queue",
+                            )
+        parser.add_argument(
+                            "--partition",
+                            choices=[
+                                '1',
+                                '2',
+                                '4',
+                                '8',
+                                '16',
+                            ],
+                            default='16',
+                            help="number of cores",
                             )
 
 
