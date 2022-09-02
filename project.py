@@ -101,9 +101,8 @@ def _setup_simfile(fname, template, data, overwrite=False):
 # the thermodynamic variables defined in init.py
 # This operation is considered successful if we have generated the .top, .gro, and .mdp files.
 @Project.operation(f'init')
-@Project.post(lambda j: j.isfile("system_input.top"))
-@Project.post(lambda j: j.isfile("system_input.gro"))
-@Project.post(lambda j: j.isfile("system_input.mdp"))
+@Project.post(lambda j: j.isfile("system_input.py"))
+@Project.post(lambda j: j.isfile("system_input.gsd"))
 
 # The with_job decorator basically states that this function accepts
 # a single job as a parameter
