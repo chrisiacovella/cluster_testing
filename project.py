@@ -35,10 +35,23 @@ class Rahman(DefaultSlurmEnvironment):
     def add_args(cls, parser):
         # Add command line arguments to the submit call.
         parser.add_argument(
-                            "--walltime",
-                            type=float,
-                            default=96,
-                            help="Walltime for this submission",
+                            "--gres",
+                            choices=[
+                                'gpu:GTX980:2',
+                                'gpu:A100:2',
+                                'gpu:V100:2',
+                            ],
+                            default='gpu:GTX980:2',
+                            help="which type of gpu",
+                            )
+        parser.add_argument(
+                            "--partition",
+                            choices=[
+                                'short-std',
+                                'short-tesla',
+                            ],
+                            default='gshort-std',
+                            help="which queue",
                             )
 
 
