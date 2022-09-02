@@ -201,8 +201,6 @@ def run_job(job):
     srun_n = job.sp.srun_n
     module = job.sp.module
     node_type = job.sp.node_type
-    gres_prefix = job.sp.gres_prefix
-    gres_n = job.sp.gres_n
 
     
     module_to_load =f"module load {module}"
