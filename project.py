@@ -54,7 +54,7 @@ class Rahman(DefaultSlurmEnvironment):
                             help="which queue",
                             )
         parser.add_argument(
-                            "--partition",
+                            "--np_global",
                             choices=[
                                 '1',
                                 '2',
