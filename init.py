@@ -16,7 +16,7 @@ import signac
 import unyt as u
 
 # Define a new project and give it a name.
-pr = signac.init_project('LJ cluster_testing')
+pr = signac.init_project('LJ_cluster_testing')
 
 
 # system sizes 22**3, 30**3, 40**3
