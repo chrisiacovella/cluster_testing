@@ -128,7 +128,7 @@ def init_job(job):
     # fetch the key information related to system structure parameterization
     
     n_molecules = job.sp.n_molecules
-    system_density = job.sp.system_density    
+    system_density = job.sp.system_density
     
     
     # use mbuild to constract a compound and fill a box
@@ -188,7 +188,7 @@ def init_job(job):
 # as it may overrun the shell can handle (e.g., getting an "Argument list too long" error)
 
 @Project.operation(f'run')
-@flow.with_job
+@flow.with_job
 @flow.cmd
 def run_job(job):
 
@@ -203,7 +203,7 @@ def run_job(job):
     msg = f"{module_to_load} && {slurm_cmd}"
     print(msg)
     return(msg)
-    
+
 # This is a simple function to check to see if the job has completed, writing to the job.doc.
 # This will be used in the analysis.py file to ensure that we are only performing analysis
 # on simulations that have completed.
