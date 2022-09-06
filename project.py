@@ -140,7 +140,7 @@ def init_job(job):
     compound_system = mb.fill_box(lj_particle, n_compounds=n_molecules, box=box, overlap=0.12, edge=0.3)
     
     # atomtype and save the input files to hoomd gsd format
-    compound_system.save(f"system_input.gsd", forcefield_files=f"{project_root}/xml_files/lj.xml", overwrite=True)
+    compound_system.save(f"system_input.gsd", forcefield_files=f"{project_root}/xml_files/lj.xml", box=box, overwrite=True)
 
     
     # fetch run time variables that will be set in the .mdp file
