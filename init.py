@@ -1,11 +1,12 @@
 """ init.py :: Initialize the signac dataspace.
     ------
     This is a simple example to demonstrate the use of
-    MoSDeF and Signac to perform a simulation using GROMACS.
+    MoSDeF and Signac to perform a simulation using HOOMD
+    to make it easy to perform a simple set of benchmarks
+    on different nodes and with different code versions.
     This file defines the dataspace that will be considered.
-    Note, each job in the dataspace will have the same
-    thermodynamic inputs, but will be initialized
-    with different length alkanes.
+    
+    simply execute python init.py to initialize dataspace
     -------
 """
 import itertools
@@ -20,13 +21,19 @@ pr = signac.init_project('LJ_cluster_testing')
 
 
 # system sizes 22**3, 30**3, 40**3
-system_sizes = [10648] #, 27000, 64000]
+system_sizes = [10648, 27000, 64000]
+
+# for each benchmark, keep density and temperature fixed for
+# each statepoint to allow for more direct comparison of TPS values.
 
 system_density = 1.0
 temperature = 1.0
-velocity_seed = 8675309
+velocity_seed = 1782
 run_time = 50000
 
+# node_type and gres_prefix are simply for book keeping purposes
+# When submitting jobs via signac, parition, gres, and ntasks
+# will need to be set via a command line argument
 
 node_param = {
     "node_type": 'std',
@@ -36,7 +43,6 @@ node_param = {
     "srun_n": [1, 2, 1, 2, 4, 8, 16],
     "run_modes": ['gpu', 'gpu', 'cpu', 'cpu', 'cpu', 'cpu', 'cpu'],
 }
-
 
 
 # Loop over the design space to create an array of statepoints

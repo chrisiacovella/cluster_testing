@@ -1,3 +1,23 @@
+""" project.py :: Initialize the signac dataspace.
+    ------
+    Basic usage:
+    
+    initialize/copy appropriate simulation files
+    for each job in the dataspace
+    
+    python project.py exec init
+    
+    submit the jobs to the cluster.
+    Note gres, partition and tasks need to be specified when submitting the project,
+    these are not read directly from the statepoint information.
+    
+    python project submit -o run --gres=gpu:GTX980:2 --partition=short-std  --ntasks=16
+    
+    Appropriate command line arguments are listed in the Rahman class defined
+    below and correspond to the configuration on the Rahman cluster.
+    -------
+"""
+
 import signac
 import os
 import pathlib
@@ -8,6 +28,8 @@ import unyt as u
 import foyer
 from foyer import Forcefield
 import mbuild as mb
+
+
 
 # Template hoomd script files are stored in engine_input/hoomd.
 from engine_input import hoomd
@@ -20,9 +42,6 @@ class Project(flow.FlowProject):
         super().__init__()
         current_path = pathlib.Path(os.getcwd()).absolute()
 
-# To run on a cluster, you may need to define a template for the scheduler
-# For example, below is what I would use on my local group cluster.
-# It is currently commented out as it won't be used in this example.
 
 from flow.environment import DefaultSlurmEnvironment
 class Rahman(DefaultSlurmEnvironment):
@@ -106,12 +125,8 @@ def _setup_simfile(fname, template, data, overwrite=False):
     return None
 
 
-# init function to set up the simulation
-# This will call mbuild to construct the system, foyer to atom-type,
-# save to the appropriate .top and .gro format,
-# and then generate the propopogate an .mdp file for GROMACS using
-# the thermodynamic variables defined in init.py
-# This operation is considered successful if we have generated the .top, .gro, and .mdp files.
+# init function to set up the simulations from the
+# statepoint info defined in the init.py file
 @Project.operation(f'init')
 @Project.post(lambda j: j.isfile("system_input.py"))
 @Project.post(lambda j: j.isfile("system_input.gsd"))
@@ -172,20 +187,8 @@ def init_job(job):
                )
 
 
-# This function defines the gmx grompp and gmx mdrun commands
-# used to pre-process and run the simulation, respectively.
-# By using the flow.cmd decorator, the string in the return statement will be executed
-# in the same way we would call it at the command line or in a shell script.
-# This avoids the need to import, e.g., os and use popen.
-
-# Note the grompp and mdrun calls could certainly be in a separate signac functions,
-# and could be desirable for some workflows.
-# One advantage to packaging in a single command is that it allows chaining together a sequence
-# of simulations, e.g., a simulation workflow with 3 distinct stages,
-# where each stage depends on the input from the prior stage.
-# This can be done by simply concatenating together the separate msg statements, before returning.
-# Although, caution should be taken when making a single really long string,
-# as it may overrun the shell can handle (e.g., getting an "Argument list too long" error)
+# command to perform simulation run including specifying the correct module
+# The .cmd decorator basically states that this function will execute the returned string
 
 @Project.operation(f'run')
 @flow.with_job
@@ -203,20 +206,6 @@ def run_job(job):
     msg = f"{module_to_load} && {slurm_cmd}"
     print(msg)
     return(msg)
-
-# This is a simple function to check to see if the job has completed, writing to the job.doc.
-# This will be used in the analysis.py file to ensure that we are only performing analysis
-# on simulations that have completed.
-@Project.operation(f'check')
-@flow.with_job
-def check_job(job):
-
-    if job.isfile(f"system.gro") == True:
-        print(f"{molecule_string} ::  completed")
-        if not molecule_string in job.doc.get('completed', []):
-            job.doc.setdefault('completed', []).append(molecule_string)
-    
-
 
 if __name__ == "__main__":
     pr = Project()
