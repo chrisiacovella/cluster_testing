@@ -26,7 +26,6 @@ for job in project_local:
     if file_exists:
         log_file = open(log_file_path, 'r')
         lines = log_file.readlines()
-        print(log_file_path, "\n", job.sp.srun_n,"\n",  len(lines))
         if len(lines) > 0:
             if "run complete" in lines[-1]:
                 if job.sp.hoomd_version == 'hoomd2.9.7':
