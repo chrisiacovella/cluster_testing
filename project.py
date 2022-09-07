@@ -28,7 +28,9 @@ import unyt as u
 import foyer
 from foyer import Forcefield
 import mbuild as mb
-
+import warnings
+import gsd
+import numpy as np
 
 
 # Template hoomd script files are stored in engine_input/hoomd.
@@ -157,6 +159,21 @@ def init_job(job):
     # atomtype and save the input files to hoomd gsd format
     compound_system.save(f"system_input.gsd", forcefield_files=f"{project_root}/xml_files/lj.xml", box=box, overwrite=True)
 
+    job_path = job.workspace()
+    # simple check on the initialized files to make sure all particles are within the box
+    f = gsd.hoomd.open(name=f'{job_path}/system_input.gsd',  mode = 'rb')
+
+    snap = f[0]
+    pos_array = np.array(snap.particles.position)
+    # note hoomd box will be larger by a factor 10 even in dimensionless units and runs from -L/2 to L/2
+    L2 = 10.0*box_length/2.0
+    for i,pos in enumerate(pos_array):
+            for k in range(0,3):
+                    if pos[k] > L2 or pos[k] < -L2:
+                        raise Exception(
+                                  f"{job_path} has particles out of bounds and will fail during execution."
+                                  )
+    
     
     # fetch run time variables that will be set in the .mdp file
     temperature = job.sp.temperature
@@ -185,6 +202,7 @@ def init_job(job):
                data=simfile["data"],
                overwrite=True,
                )
+
 
 
 # command to perform simulation run including specifying the correct module
