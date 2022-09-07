@@ -30,6 +30,7 @@ from foyer import Forcefield
 import mbuild as mb
 import warnings
 import gsd
+import gsd.hoomd
 import numpy as np
 
 
@@ -154,7 +155,7 @@ def init_job(job):
     box_length = volume**(1.0/3.0)
     
     box = mb.Box(lengths=[box_length, box_length, box_length])
-    compound_system = mb.fill_box(lj_particle, n_compounds=n_molecules, box=box, overlap=0.12, edge=0.3)
+    compound_system = mb.fill_box(lj_particle, n_compounds=n_molecules, box=box, overlap=0.12, edge=0.3, seed=sp.job.velocity_seed)
     
     # atomtype and save the input files to hoomd gsd format
     compound_system.save(f"system_input.gsd", forcefield_files=f"{project_root}/xml_files/lj.xml", box=box, overwrite=True)

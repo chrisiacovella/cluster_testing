@@ -65,13 +65,14 @@ for job in project_local:
 #print(cpu_results)
 gpu_results_sorted = sorted(gpu_results, key=lambda d: d['n_devices'])
 cpu_results_sorted = sorted(cpu_results, key=lambda d: d['n_devices'])
-
-print('| n particles | device | n devices | TPS |' )
-print('| ------ | ------ | ------ | ------ |' )
+gpu_results_sorted = sorted(gpu_results_sorted, key=lambda d: d['n_particles'])
+cpu_results_sorted = sorted(cpu_results_sorted, key=lambda d: d['n_particles'])
+print('| n particles | device | n devices | TPS | TPS/n devices |' )
+print('| ------ | ------ | ------ | ------ | ------ |' )
 for result in gpu_results_sorted:
-    print("| ", result['n_particles'], " | ", result['device'], " | ",  result['n_devices'], " | ", result['TPS'], " |")
+    print("| ", result['n_particles'], " | ", result['device'], " | ",  result['n_devices'], " | ", int(result['TPS']), " |", int(result['TPS']/result['n_devices']), " | ")
     
 for result in cpu_results_sorted:
-    print("| ", result['n_particles'], " | ", "CPU", " | ",  result['n_devices'], " | ", result['TPS'], " |")
+    print("| ", result['n_particles'], " | ", "CPU", " | ",  result['n_devices'], " | ", int(result['TPS']), " |", int(result['TPS']/result['n_devices']), " | ")
 
                         
